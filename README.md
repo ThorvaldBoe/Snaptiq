@@ -6,34 +6,30 @@ Many print-on-demand pipelines treat semi-transparent PNG pixels inconsistently,
 
 ## Project status
 
-This repository is in its initial structure phase. The backend projects target .NET 10 and intentionally avoid UI, dependency injection, plugin systems, and broad abstractions until the core PNG alpha workflow is proven.
+This repository is in its initial solution-structure phase. The .NET projects target .NET 10 and intentionally avoid business logic, UI, dependency injection, plugin systems, and broad abstractions until the core PNG alpha workflow is proven.
 
 ## Repository layout
 
 ```text
+Snaptiq.sln       .NET solution file.
 src/
-  Snaptiq.Core/   Core alpha-cleaning logic.
-  Snaptiq.Cli/    Command-line entry point.
-  Snaptiq.Tests/  Automated tests for the core behavior.
-web/              Reserved for future web-related assets if needed.
-samples/          Sample image fixtures and workflow notes.
-docs/             Documentation and design notes.
-.github/          GitHub repository configuration.
+  Snaptiq.Core/   Class library for future core behavior.
+  Snaptiq.Cli/    Console application entry point.
+  Snaptiq.Tests/  xUnit test project for future behavior.
 ```
 
 ## Current focus
 
-The initial problem Snaptiq is designed to solve:
+The current focus is the solution structure only:
 
-1. Detect semi-transparent PNG alpha values.
-2. Convert alpha data into print-safe values.
-3. Preserve a small, understandable codebase while the workflow is validated against real print-on-demand files.
+1. Keep the Snaptiq solution buildable.
+2. Keep project references in place for future implementation.
+3. Defer PNG alpha business logic until the behavior is defined.
 
 ## Build
 
 Install the .NET 10 SDK, then run:
 
 ```bash
-dotnet build src/Snaptiq.Cli/Snaptiq.Cli.csproj
-dotnet test src/Snaptiq.Tests/Snaptiq.Tests.csproj
+dotnet build Snaptiq.sln
 ```
