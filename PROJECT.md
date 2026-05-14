@@ -1,28 +1,45 @@
-# Snaptiq Project Notes
+# Snaptiq Project
 
-## Purpose
+## Mission
 
-Snaptiq exists to solve a narrow, real-world issue: PNG files with semi-transparent alpha pixels can behave poorly in print-on-demand and garment-printing workflows.
+Snaptiq fixes semi-transparent pixels in PNG exports created during Affinity Designer workflows.
 
-The project should stay small and practical until the alpha-cleaning behavior is validated with real artwork and production constraints.
+The project focuses on making exported artwork safer for print-on-demand production by removing problematic alpha pixels while preserving acceptable visual quality.
 
-## Non-goals for now
+## Current Priority
 
-- No graphical user interface.
-- No dependency injection container.
-- No plugin system.
-- No generalized image-processing framework.
-- No business logic before the core behavior is defined.
-- No abstractions that are not required by the current PNG alpha workflow.
+Build a CLI utility that can process one PNG and produce a print-safe output.
 
-## Backend target
+The CLI should stay focused on reading an input PNG, writing an output PNG, and reporting basic success or failure. Image-processing decisions belong in the core library.
 
-All backend projects target .NET 10.
+## Architecture Rules
 
-## Initial milestones
+1. Business logic belongs in `Snaptiq.Core`.
+2. CLI handles file input/output only.
+3. Tests must use real regression samples.
+4. No UI code in core.
+5. Avoid premature abstractions.
 
-1. Establish the Snaptiq .NET solution structure.
-2. Define the alpha-cleaning rules.
-3. Add deterministic tests around alpha edge cases.
-4. Add PNG file input/output once the core rules are stable.
-5. Validate output with real print-on-demand samples.
+## Tech Stack
+
+### Backend
+
+- .NET 10
+- ImageSharp
+
+### Frontend (future)
+
+- TypeScript
+- Vite
+
+### Desktop (future)
+
+- Avalonia
+
+## Success Criteria
+
+MVP is complete when:
+
+- A broken PNG can be processed.
+- All semi-transparent pixels are removed.
+- Output remains visually acceptable for print-on-demand.
