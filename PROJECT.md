@@ -14,6 +14,8 @@ The CLI should stay focused on reading an input PNG, writing an output PNG, and 
 
 ## Architecture Rules
 
+Detailed core implementation guidance lives in `docs/engineering/core-engineering-rules.md`.
+
 1. Business logic belongs in `Snaptiq.Core`.
 2. CLI handles file input/output only.
 3. Tests must use real regression samples.
@@ -24,10 +26,11 @@ The CLI should stay focused on reading an input PNG, writing an output PNG, and 
 
 1. Specifications live in `docs/specs`.
 2. The `docs` folder contains `requirements.md`, which tracks all specification documents and their status.
-3. Specification status can be `draft`, `InProgress`, or `Done`.
-4. When a feature is done, the related specification document is moved to `docs/specs/done`.
-5. A feature specification should have a name that reflects its contents, using dashes to separate words, for example `core-alpha-algorithm.md`.
-6. Any feature, except bugfixes or small adjustments, requires a specification.
+3. `docs/requirements.md` must mention `docs/engineering/core-engineering-rules.md` so specification work stays aligned with the core engineering rules.
+4. Specification status can be `draft`, `InProgress`, or `Done`.
+5. When a feature is done, the related specification document is moved to `docs/specs/done`.
+6. A feature specification should have a name that reflects its contents, using dashes to separate words, for example `core-alpha-algorithm.md`.
+7. Any feature, except bugfixes or small adjustments, requires a specification.
 
 ## Tech Stack
 
