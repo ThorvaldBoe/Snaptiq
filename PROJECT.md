@@ -20,12 +20,23 @@ The CLI should stay focused on reading an input PNG, writing an output PNG, and 
 4. No UI code in core.
 5. Avoid premature abstractions.
 
+## Specification Rules
+
+1. Specifications live in `docs/specs`.
+2. The `docs` folder contains `requirements.md`, which tracks all specification documents and their status.
+3. Specification status can be `draft`, `InProgress`, or `Done`.
+4. When a feature is done, the related specification document is moved to `docs/specs/done`.
+5. A feature specification should have a name that reflects its contents, using dashes to separate words, for example `core-alpha-algorithm.md`.
+6. Any feature, except bugfixes or small adjustments, requires a specification.
+
 ## Tech Stack
 
 ### Backend
 
 - .NET 10
 - ImageSharp
+- This project uses clean architecture, and all code is grouped into folders and namespaces following the rules of clean architecture.
+- This project follows the SOLID principles of software engineering.
 
 ### Frontend (future)
 
