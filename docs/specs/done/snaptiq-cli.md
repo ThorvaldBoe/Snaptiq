@@ -1,7 +1,7 @@
 # Snaptiq CLI Specification
 Version: 0.1
 Module: Snaptiq.Cli
-Status: Draft
+Status: Done
 
 ---
 
