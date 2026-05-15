@@ -11,3 +11,4 @@ All specifications and implementation work must follow the core engineering rule
 | Order | Specification | Status | Notes |
 | --- | --- | --- | --- |
 | 1 | [`core-alpha-algorithm.md`](specs/core-alpha-algorithm.md) | draft | Defines the Snaptiq.Core alpha normalization algorithm. |
+| 2 | [`snaptiq-cli.md`](specs/done/snaptiq-cli.md) | Done | Implements the Snaptiq.Cli single-file processing workflow. |
