@@ -24,3 +24,9 @@ Thumbs.db
 *.log
 *.tmp
 *.temp
+
+# Node packages and web build output
+node_modules/
+web/node_modules/
+web/dist/
+dist/
