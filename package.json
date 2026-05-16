@@ -1,0 +1,17 @@
+{
+  "name": "snaptiq",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "web:dev": "vite --host 0.0.0.0 web",
+    "web:build": "vite build web",
+    "web:test": "vitest run --config web/vitest.config.ts",
+    "web:typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.25",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.4",
+    "vitest": "^4.0.14"
+  }
+}

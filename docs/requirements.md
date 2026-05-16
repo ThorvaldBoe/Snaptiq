@@ -12,3 +12,4 @@ All specifications and implementation work must follow the core engineering rule
 | --- | --- | --- | --- |
 | 1 | [`core-alpha-algorithm.md`](specs/core-alpha-algorithm.md) | draft | Defines the Snaptiq.Core alpha normalization algorithm. |
 | 2 | [`snaptiq-cli.md`](specs/done/snaptiq-cli.md) | Done | Implements the Snaptiq.Cli single-file processing workflow. |
+| 3 | [`snaptiq-web-file-based.md`](specs/done/snaptiq-web-file-based.md) | Done | Implements the browser-based PNG upload, preview, threshold tuning, and download workflow. |

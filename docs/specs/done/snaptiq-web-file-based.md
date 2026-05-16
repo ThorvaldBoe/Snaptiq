@@ -1,7 +1,7 @@
 # Snaptiq Web Specification
 Version: 0.1
 Module: Snaptiq.Web
-Status: Draft
+Status: Done
 
 ---
 

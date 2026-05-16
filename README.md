@@ -12,10 +12,14 @@ This repository is in its initial solution-structure phase. The .NET projects ta
 
 ```text
 Snaptiq.sln       .NET solution file.
+package.json      Web build and test scripts.
 src/
-  Snaptiq.Core/   Class library for future core behavior.
+  Snaptiq.Core/   Class library for PNG alpha normalization.
   Snaptiq.Cli/    Console application entry point.
-  Snaptiq.Tests/  xUnit test project for future behavior.
+  Snaptiq.Tests/  xUnit test project for core behavior.
+web/
+  src/            TypeScript Snaptiq engine, embeddable widget, and demo page.
+  test/           Vitest coverage for the TypeScript engine.
 ```
 
 ## Current focus
@@ -32,4 +36,12 @@ Install the .NET 10 SDK, then run:
 
 ```bash
 dotnet build Snaptiq.sln
+```
+
+Install Node.js dependencies, then run the web checks:
+
+```bash
+npm install
+npm run web:test
+npm run web:build
 ```
