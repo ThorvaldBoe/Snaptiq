@@ -232,7 +232,7 @@ internal sealed record CliOptions(string InputFile, int Threshold, string? Outpu
                     outputFile = GetRequiredOptionValue(args, ref index, arg);
                     break;
                 default:
-                    if (arg.StartsWith('-', StringComparison.Ordinal))
+                    if (arg.StartsWith("-", StringComparison.Ordinal))
                     {
                         throw new CliException($"Unknown option: {arg}");
                     }
