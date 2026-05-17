@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "Snaptiq.Cli": {
+      "commandName": "Project",
+      "commandLineArgs": "\"..\\Snaptiq.Tests\\resources\\SnaptiqLogo_cutout.png\" --output \"..\\..\\samples\\SnaptiqLogo_debug.png\" --threshold 128",
+      "workingDirectory": "$(ProjectDir)"
+    }
+  }
+}
