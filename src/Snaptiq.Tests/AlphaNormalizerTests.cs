@@ -1,6 +1,7 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Snaptiq.Core;
+using Xunit;
 
 namespace Snaptiq.Tests;
 
