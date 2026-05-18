@@ -29,6 +29,8 @@ const acceptedPngTypes = new Set(['image/png']);
 const minimumZoom = 0.25;
 const maximumZoom = 8;
 const zoomStep = 0.25;
+const sampleImageUrl = '/samples/sampleimage.png';
+const sampleImageFileName = 'sampleimage.png';
 
 export class SnaptiqWidget {
   private readonly root: HTMLElement;
@@ -107,6 +109,10 @@ export class SnaptiqWidget {
       }
     });
 
+    this.mustQuery<HTMLButtonElement>('[data-snaptiq-sample]').addEventListener('click', () => {
+      void this.loadSampleImage();
+    });
+
     this.dropZone.addEventListener('dragover', (event) => {
       event.preventDefault();
       this.dropZone.classList.add('is-dragging');
@@ -161,6 +167,21 @@ export class SnaptiqWidget {
       this.setError(toDisplayMessage(error));
     } finally {
       this.fileInput.value = '';
+    }
+  }
+
+  private async loadSampleImage(): Promise<void> {
+    try {
+      const response = await fetch(sampleImageUrl);
+      if (!response.ok) {
+        throw new Error('Image is corrupted or could not be read.');
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], sampleImageFileName, { type: 'image/png' });
+      await this.loadFile(file);
+    } catch (error) {
+      this.setError(toDisplayMessage(error));
     }
   }
 
@@ -345,10 +366,13 @@ function renderWidget(initialThreshold: number): string {
           <strong>Upload a PNG</strong>
           <span>Choose a file or drag and drop it here.</span>
         </div>
-        <label class="snaptiq-button">
-          Select PNG
-          <input data-snaptiq-file type="file" accept="image/png" />
-        </label>
+        <div class="snaptiq-upload-actions">
+          <button class="snaptiq-button" data-snaptiq-sample type="button">Add Sample</button>
+          <label class="snaptiq-button">
+            Select PNG
+            <input data-snaptiq-file type="file" accept="image/png" />
+          </label>
+        </div>
       </div>
 
       <p class="snaptiq-status" data-snaptiq-status role="status"></p>
