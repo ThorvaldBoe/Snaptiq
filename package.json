@@ -5,6 +5,7 @@
   "scripts": {
     "web:dev": "vite --host 0.0.0.0 web",
     "web:build": "vite build web",
+    "build:embed": "vite build --config web/vite.embed.config.ts",
     "web:test": "vitest run --config web/vitest.config.ts",
     "web:typecheck": "tsc --noEmit"
   },
