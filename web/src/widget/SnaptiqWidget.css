@@ -155,6 +155,10 @@
   touch-action: none;
 }
 
+.snaptiq-web .snaptiq-pane.has-solid-background {
+  background-image: none;
+}
+
 .snaptiq-web .snaptiq-pane.is-pannable {
   cursor: grab;
 }
@@ -164,6 +168,72 @@
   max-height: 100%;
   image-rendering: auto;
   transform-origin: center center;
+}
+
+.snaptiq-web .snaptiq-background-control {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.snaptiq-web .snaptiq-background-control > span {
+  font-weight: 800;
+}
+
+.snaptiq-web .snaptiq-background-options {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.snaptiq-web .snaptiq-background-swatch {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #9aa8c2;
+  border-radius: 8px;
+  background: var(--snaptiq-swatch-color);
+  cursor: pointer;
+}
+
+.snaptiq-web .snaptiq-background-swatch.is-transparent {
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(45deg, #d9dfeb 25%, transparent 25%),
+    linear-gradient(-45deg, #d9dfeb 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #d9dfeb 75%),
+    linear-gradient(-45deg, transparent 75%, #d9dfeb 75%);
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+}
+
+.snaptiq-web .snaptiq-background-swatch:hover {
+  border-color: #4169e1;
+  box-shadow: 0 0 0 3px #dfe7ff;
+}
+
+.snaptiq-web .snaptiq-background-swatch[aria-pressed="true"] {
+  border-color: #172033;
+  box-shadow: 0 0 0 3px #4169e1;
+}
+
+.snaptiq-web .snaptiq-background-options input {
+  width: 120px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #9aa8c2;
+  border-radius: 8px;
+  color: #172033;
+  font: inherit;
+  font-weight: 700;
+}
+
+.snaptiq-web .snaptiq-background-options input.is-invalid {
+  border-color: #b42318;
+  outline-color: #b42318;
 }
 
 .snaptiq-web .snaptiq-stats {

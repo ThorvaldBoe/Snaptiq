@@ -7,6 +7,11 @@ import {
   type AlphaNormalizationResult,
   type ProcessingStatistics
 } from '../engine';
+import {
+  backgroundColorPresets,
+  normalizeBackgroundColorInput,
+  transparentBackgroundValue
+} from './backgroundColor';
 import './SnaptiqWidget.css';
 
 export interface SnaptiqWidgetOptions {
@@ -49,11 +54,14 @@ export class SnaptiqWidget {
   private readonly modifiedValue: HTMLElement;
   private readonly thresholdUsedValue: HTMLElement;
   private readonly panes: HTMLElement[];
+  private readonly backgroundSwatches: HTMLButtonElement[];
+  private readonly backgroundInput: HTMLInputElement;
   private loadedImage: LoadedImage | null = null;
   private processedResult: AlphaNormalizationResult | null = null;
   private processingFrame: number | null = null;
   private dragStart: { x: number; y: number; panX: number; panY: number } | null = null;
   private viewState: ViewState = { zoom: 1, panX: 0, panY: 0 };
+  private previewBackgroundColor = transparentBackgroundValue;
 
   public constructor(root: HTMLElement, options: SnaptiqWidgetOptions = {}) {
     this.root = root;
@@ -76,10 +84,13 @@ export class SnaptiqWidget {
     this.modifiedValue = this.mustQuery('[data-snaptiq-modified]');
     this.thresholdUsedValue = this.mustQuery('[data-snaptiq-threshold-used]');
     this.panes = Array.from(this.root.querySelectorAll<HTMLElement>('[data-snaptiq-pane]'));
+    this.backgroundSwatches = Array.from(this.root.querySelectorAll<HTMLButtonElement>('[data-snaptiq-background-swatch]'));
+    this.backgroundInput = this.mustQuery<HTMLInputElement>('[data-snaptiq-background-input]');
 
     this.bindEvents();
     this.updateThresholdLabel();
     this.updateStats(emptyStatistics(Number(this.thresholdInput.value)));
+    this.applyPreviewBackground();
     this.setStatus('Upload a PNG file to begin.');
   }
 
@@ -134,6 +145,11 @@ export class SnaptiqWidget {
     this.mustQuery<HTMLButtonElement>('[data-snaptiq-zoom-in]').addEventListener('click', () => this.setZoom(this.viewState.zoom + zoomStep));
     this.mustQuery<HTMLButtonElement>('[data-snaptiq-zoom-out]').addEventListener('click', () => this.setZoom(this.viewState.zoom - zoomStep));
     this.mustQuery<HTMLButtonElement>('[data-snaptiq-reset-zoom]').addEventListener('click', () => this.resetView());
+    this.backgroundInput.addEventListener('input', () => this.updatePreviewBackgroundFromInput());
+
+    for (const swatch of this.backgroundSwatches) {
+      swatch.addEventListener('click', () => this.setPreviewBackground(swatch.dataset.snaptiqBackgroundValue ?? transparentBackgroundValue));
+    }
 
     for (const pane of this.panes) {
       pane.addEventListener('pointerdown', (event) => this.startPan(event));
@@ -327,6 +343,42 @@ export class SnaptiqWidget {
     this.modifiedValue.textContent = statistics.pixelsModified.toLocaleString();
   }
 
+  private updatePreviewBackgroundFromInput(): void {
+    const normalizedColor = normalizeBackgroundColorInput(this.backgroundInput.value);
+
+    if (normalizedColor === null) {
+      this.backgroundInput.classList.add('is-invalid');
+      return;
+    }
+
+    this.setPreviewBackground(normalizedColor, { updateInput: normalizedColor === transparentBackgroundValue });
+  }
+
+  private setPreviewBackground(color: string, options: { updateInput?: boolean } = { updateInput: true }): void {
+    this.previewBackgroundColor = color;
+
+    if (options.updateInput !== false) {
+      this.backgroundInput.value = color;
+    }
+
+    this.backgroundInput.classList.remove('is-invalid');
+    this.applyPreviewBackground();
+  }
+
+  private applyPreviewBackground(): void {
+    const isTransparent = this.previewBackgroundColor === transparentBackgroundValue;
+
+    for (const pane of this.panes) {
+      pane.classList.toggle('has-solid-background', !isTransparent);
+      pane.style.backgroundColor = isTransparent ? '' : this.previewBackgroundColor;
+    }
+
+    for (const swatch of this.backgroundSwatches) {
+      const swatchValue = swatch.dataset.snaptiqBackgroundValue ?? transparentBackgroundValue;
+      swatch.setAttribute('aria-pressed', String(swatchValue === this.previewBackgroundColor));
+    }
+  }
+
   private setStatus(message: string): void {
     this.statusMessage.textContent = message;
     this.statusMessage.classList.remove('is-error');
@@ -405,6 +457,22 @@ function renderWidget(initialThreshold: number): string {
         </figure>
       </div>
 
+      <div class="snaptiq-background-control" aria-label="Preview background controls">
+        <span>Set background</span>
+        <div class="snaptiq-background-options">
+          ${renderBackgroundSwatches()}
+          <input
+            data-snaptiq-background-input
+            type="text"
+            inputmode="text"
+            spellcheck="false"
+            aria-label="Custom background hex color"
+            placeholder="#RRGGBB"
+            value=""
+          />
+        </div>
+      </div>
+
       <dl class="snaptiq-stats">
         <div><dt>Threshold used</dt><dd data-snaptiq-threshold-used>0</dd></div>
         <div><dt>Total pixels</dt><dd data-snaptiq-total-pixels>0</dd></div>
@@ -413,6 +481,28 @@ function renderWidget(initialThreshold: number): string {
       </dl>
     </section>
   `;
+}
+
+function renderBackgroundSwatches(): string {
+  return backgroundColorPresets
+    .map((preset) => {
+      const swatchStyle = preset.value === transparentBackgroundValue ? '' : ` style="--snaptiq-swatch-color: ${preset.value}"`;
+      const transparentClass = preset.value === transparentBackgroundValue ? ' is-transparent' : '';
+
+      return `
+        <button
+          class="snaptiq-background-swatch${transparentClass}"
+          data-snaptiq-background-swatch
+          data-snaptiq-background-value="${preset.value}"
+          type="button"
+          aria-label="${preset.label}"
+          aria-pressed="${preset.value === transparentBackgroundValue}"
+          title="${preset.label}"
+          ${swatchStyle}
+        ></button>
+      `;
+    })
+    .join('');
 }
 
 function validatePngFile(file: File): void {
