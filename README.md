@@ -69,9 +69,18 @@ Copy `web/dist-embed/snaptiq-web.js` and `web/dist-embed/snaptiq-web.css` into t
 <div id="snaptiq-tool"></div>
 <script src="/vendor/snaptiq-web/snaptiq-web.js"></script>
 <script>
-  window.SnaptiqWeb.mount('#snaptiq-tool', { initialThreshold: 128 });
+  window.SnaptiqWeb.mount('#snaptiq-tool', {
+    initialThreshold: 128,
+    sampleImageUrl: '/vendor/snaptiq-web/sampleimage.png'
+  });
 </script>
 ```
 
 `mount(target, options?)` accepts a CSS selector string or an `HTMLElement`. Use
 `window.SnaptiqWeb.unmount(target)` to destroy a mounted widget.
+
+Widget options:
+
+- `initialThreshold?: number` sets the starting cleanup threshold.
+- `sampleImageUrl?: string` overrides the bundled sample PNG path for embedded deployments. If omitted,
+  Snaptiq keeps using `/samples/sampleimage.png`, which preserves the local standalone behavior.

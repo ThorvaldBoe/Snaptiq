@@ -16,6 +16,7 @@ import './SnaptiqWidget.css';
 
 export interface SnaptiqWidgetOptions {
   initialThreshold?: number;
+  sampleImageUrl?: string;
 }
 
 interface LoadedImage {
@@ -36,7 +37,7 @@ const acceptedPngTypes = new Set(['image/png']);
 const minimumZoom = 0.25;
 const maximumZoom = 8;
 const zoomStep = 0.25;
-const sampleImageUrl = '/samples/sampleimage.png';
+export const defaultSampleImageUrl = '/samples/sampleimage.png';
 const sampleImageFileName = 'sampleimage.png';
 
 export class SnaptiqWidget {
@@ -65,6 +66,7 @@ export class SnaptiqWidget {
   private readonly processedFullScreenButton: HTMLButtonElement;
   private readonly backgroundSwatches: HTMLButtonElement[];
   private readonly backgroundInput: HTMLInputElement;
+  private readonly sampleImageUrl: string;
   private loadedImage: LoadedImage | null = null;
   private processedResult: AlphaNormalizationResult | null = null;
   private processingFrame: number | null = null;
@@ -86,6 +88,7 @@ export class SnaptiqWidget {
     this.root = root;
     const initialThreshold = options.initialThreshold ?? defaultThreshold;
     validateThreshold(initialThreshold);
+    this.sampleImageUrl = resolveSampleImageUrl(options);
     this.root.innerHTML = renderWidget(initialThreshold);
 
     this.thresholdInput = this.mustQuery<HTMLInputElement>('[data-snaptiq-threshold]');
@@ -223,7 +226,7 @@ export class SnaptiqWidget {
 
   private async loadSampleImage(): Promise<void> {
     try {
-      const response = await fetch(sampleImageUrl);
+      const response = await fetch(this.sampleImageUrl);
       if (!response.ok) {
         throw new Error('Image is corrupted or could not be read.');
       }
@@ -513,6 +516,10 @@ export class SnaptiqWidget {
 
     return element;
   }
+}
+
+export function resolveSampleImageUrl(options: SnaptiqWidgetOptions = {}): string {
+  return options.sampleImageUrl ?? defaultSampleImageUrl;
 }
 
 export function mountSnaptiqWidget(root: HTMLElement | string, options?: SnaptiqWidgetOptions): SnaptiqWidget {
