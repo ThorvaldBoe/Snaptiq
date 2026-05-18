@@ -14,3 +14,4 @@ All specifications and implementation work must follow the core engineering rule
 | 2 | [`snaptiq-cli.md`](specs/done/snaptiq-cli.md) | Done | Implements the Snaptiq.Cli single-file processing workflow. |
 | 3 | [`snaptiq-web-file-based.md`](specs/done/snaptiq-web-file-based.md) | Done | Implements the browser-based PNG upload, preview, threshold tuning, and download workflow. |
 | 4 | [`sample-image.md`](specs/done/sample-image.md) | Done | Adds a bundled sample PNG action to the web UI. |
+| 5 | [`web-full-screen-preview-mode.md`](specs/done/web-full-screen-preview-mode.md) | Done | Adds focused full-screen preview mode to the web UI. |
