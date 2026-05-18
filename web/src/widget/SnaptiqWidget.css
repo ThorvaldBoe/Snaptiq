@@ -1,57 +1,25 @@
-:root {
-  color: #172033;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #f5f7fb;
-}
-
-body {
-  margin: 0;
-}
-
-.snaptiq-demo {
-  width: min(1180px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 40px 0;
-}
-
-.snaptiq-hero {
-  margin-bottom: 24px;
-}
-
-.snaptiq-hero h1 {
-  max-width: 760px;
-  margin: 0 0 12px;
-  font-size: clamp(2rem, 5vw, 4rem);
-  line-height: 1;
-}
-
-.snaptiq-hero p:not(.eyebrow) {
-  max-width: 720px;
-  color: #4b5875;
-  font-size: 1.1rem;
-}
-
-.eyebrow {
-  margin: 0 0 8px;
-  color: #4169e1;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.snaptiq-widget {
+.snaptiq-web {
   display: grid;
   gap: 18px;
+  box-sizing: border-box;
   padding: 24px;
   border: 1px solid #dce3f4;
   border-radius: 24px;
+  color: #172033;
   background: #ffffff;
   box-shadow: 0 24px 70px rgb(21 34 61 / 12%);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.snaptiq-upload,
-.snaptiq-toolbar,
-.snaptiq-stats {
+.snaptiq-web *,
+.snaptiq-web *::before,
+.snaptiq-web *::after {
+  box-sizing: border-box;
+}
+
+.snaptiq-web .snaptiq-upload,
+.snaptiq-web .snaptiq-toolbar,
+.snaptiq-web .snaptiq-stats {
   display: flex;
   gap: 16px;
   align-items: center;
@@ -59,32 +27,32 @@ body {
   flex-wrap: wrap;
 }
 
-.snaptiq-upload {
+.snaptiq-web .snaptiq-upload {
   padding: 18px;
   border: 2px dashed #adc0ef;
   border-radius: 18px;
   background: #f8faff;
 }
 
-.snaptiq-upload.is-dragging {
+.snaptiq-web .snaptiq-upload.is-dragging {
   border-color: #4169e1;
   background: #eef3ff;
 }
 
-.snaptiq-upload strong,
-.snaptiq-upload span {
+.snaptiq-web .snaptiq-upload strong,
+.snaptiq-web .snaptiq-upload span {
   display: block;
 }
 
-.snaptiq-upload span,
-.snaptiq-status,
-.snaptiq-stats dt {
+.snaptiq-web .snaptiq-upload span,
+.snaptiq-web .snaptiq-status,
+.snaptiq-web .snaptiq-stats dt {
   color: #5d6b89;
 }
 
-.snaptiq-button,
-.snaptiq-toolbar button,
-.snaptiq-download {
+.snaptiq-web .snaptiq-button,
+.snaptiq-web .snaptiq-toolbar button,
+.snaptiq-web .snaptiq-download {
   display: inline-flex;
   min-height: 42px;
   align-items: center;
@@ -100,18 +68,18 @@ body {
   text-decoration: none;
 }
 
-.snaptiq-toolbar button {
+.snaptiq-web .snaptiq-toolbar button {
   color: #24314d;
   background: #eaf0ff;
 }
 
-.snaptiq-download[aria-disabled="true"] {
+.snaptiq-web .snaptiq-download[aria-disabled="true"] {
   pointer-events: none;
   color: #8390aa;
   background: #edf1f8;
 }
 
-.snaptiq-button input {
+.snaptiq-web .snaptiq-button input {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -119,50 +87,50 @@ body {
   pointer-events: none;
 }
 
-.snaptiq-status {
+.snaptiq-web .snaptiq-status {
   min-height: 1.5em;
   margin: 0;
 }
 
-.snaptiq-status.is-error {
+.snaptiq-web .snaptiq-status.is-error {
   color: #b42318;
   font-weight: 700;
 }
 
-.snaptiq-threshold {
+.snaptiq-web .snaptiq-threshold {
   display: grid;
   min-width: min(360px, 100%);
   gap: 8px;
   flex: 1;
 }
 
-.snaptiq-threshold input {
+.snaptiq-web .snaptiq-threshold input {
   width: 100%;
 }
 
-.snaptiq-zoom-controls {
+.snaptiq-web .snaptiq-zoom-controls {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.snaptiq-workspace {
+.snaptiq-web .snaptiq-workspace {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
-.snaptiq-workspace figure {
+.snaptiq-web .snaptiq-workspace figure {
   min-width: 0;
   margin: 0;
 }
 
-.snaptiq-workspace figcaption {
+.snaptiq-web .snaptiq-workspace figcaption {
   margin-bottom: 8px;
   font-weight: 800;
 }
 
-.snaptiq-pane {
+.snaptiq-web .snaptiq-pane {
   position: relative;
   display: grid;
   min-height: 420px;
@@ -181,23 +149,23 @@ body {
   touch-action: none;
 }
 
-.snaptiq-pane.is-pannable {
+.snaptiq-web .snaptiq-pane.is-pannable {
   cursor: grab;
 }
 
-.snaptiq-pane canvas {
+.snaptiq-web .snaptiq-pane canvas {
   max-width: 100%;
   max-height: 100%;
   image-rendering: auto;
   transform-origin: center center;
 }
 
-.snaptiq-stats {
+.snaptiq-web .snaptiq-stats {
   align-items: stretch;
   margin: 0;
 }
 
-.snaptiq-stats div {
+.snaptiq-web .snaptiq-stats div {
   min-width: 180px;
   flex: 1;
   padding: 14px;
@@ -205,23 +173,23 @@ body {
   background: #f6f8fd;
 }
 
-.snaptiq-stats dt,
-.snaptiq-stats dd {
+.snaptiq-web .snaptiq-stats dt,
+.snaptiq-web .snaptiq-stats dd {
   margin: 0;
 }
 
-.snaptiq-stats dd {
+.snaptiq-web .snaptiq-stats dd {
   margin-top: 4px;
   font-size: 1.5rem;
   font-weight: 800;
 }
 
 @media (max-width: 820px) {
-  .snaptiq-workspace {
+  .snaptiq-web .snaptiq-workspace {
     grid-template-columns: 1fr;
   }
 
-  .snaptiq-pane {
+  .snaptiq-web .snaptiq-pane {
     min-height: 300px;
   }
 }

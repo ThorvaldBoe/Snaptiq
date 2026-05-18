@@ -29,4 +29,5 @@ Thumbs.db
 node_modules/
 web/node_modules/
 web/dist/
+web/dist-embed/
 dist/
