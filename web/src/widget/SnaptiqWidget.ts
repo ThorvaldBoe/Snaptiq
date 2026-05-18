@@ -30,6 +30,8 @@ interface ViewState {
   panY: number;
 }
 
+type FullScreenPreviewImageType = 'original' | 'processed';
+
 const acceptedPngTypes = new Set(['image/png']);
 const minimumZoom = 0.25;
 const maximumZoom = 8;
@@ -47,20 +49,37 @@ export class SnaptiqWidget {
   private readonly downloadLink: HTMLAnchorElement;
   private readonly originalCanvas: HTMLCanvasElement;
   private readonly processedCanvas: HTMLCanvasElement;
+  private readonly fullScreenCanvas: HTMLCanvasElement;
   private readonly originalContext: CanvasRenderingContext2D;
   private readonly processedContext: CanvasRenderingContext2D;
+  private readonly fullScreenContext: CanvasRenderingContext2D;
   private readonly totalPixelsValue: HTMLElement;
   private readonly semiTransparentValue: HTMLElement;
   private readonly modifiedValue: HTMLElement;
   private readonly thresholdUsedValue: HTMLElement;
   private readonly panes: HTMLElement[];
+  private readonly fullScreenPreview: HTMLElement;
+  private readonly fullScreenPane: HTMLElement;
+  private readonly fullScreenTitle: HTMLElement;
+  private readonly originalFullScreenButton: HTMLButtonElement;
+  private readonly processedFullScreenButton: HTMLButtonElement;
   private readonly backgroundSwatches: HTMLButtonElement[];
   private readonly backgroundInput: HTMLInputElement;
   private loadedImage: LoadedImage | null = null;
   private processedResult: AlphaNormalizationResult | null = null;
   private processingFrame: number | null = null;
   private dragStart: { x: number; y: number; panX: number; panY: number } | null = null;
+  private readonly handleDocumentKeyDown = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape') {
+      this.closeFullScreenPreview();
+    }
+  };
+  private readonly handleWindowResize = (): void => {
+    this.updateFullScreenCanvasDisplaySize();
+  };
   private viewState: ViewState = { zoom: 1, panX: 0, panY: 0 };
+  private isFullScreenPreview = false;
+  private fullScreenPreviewImageType: FullScreenPreviewImageType = 'original';
   private previewBackgroundColor = transparentBackgroundValue;
 
   public constructor(root: HTMLElement, options: SnaptiqWidgetOptions = {}) {
@@ -77,19 +96,27 @@ export class SnaptiqWidget {
     this.downloadLink = this.mustQuery<HTMLAnchorElement>('[data-snaptiq-download]');
     this.originalCanvas = this.mustQuery<HTMLCanvasElement>('[data-snaptiq-original-canvas]');
     this.processedCanvas = this.mustQuery<HTMLCanvasElement>('[data-snaptiq-processed-canvas]');
+    this.fullScreenCanvas = this.mustQuery<HTMLCanvasElement>('[data-snaptiq-full-screen-canvas]');
     this.originalContext = getCanvasContext(this.originalCanvas);
     this.processedContext = getCanvasContext(this.processedCanvas);
+    this.fullScreenContext = getCanvasContext(this.fullScreenCanvas);
     this.totalPixelsValue = this.mustQuery('[data-snaptiq-total-pixels]');
     this.semiTransparentValue = this.mustQuery('[data-snaptiq-semi-transparent]');
     this.modifiedValue = this.mustQuery('[data-snaptiq-modified]');
     this.thresholdUsedValue = this.mustQuery('[data-snaptiq-threshold-used]');
     this.panes = Array.from(this.root.querySelectorAll<HTMLElement>('[data-snaptiq-pane]'));
+    this.fullScreenPreview = this.mustQuery('[data-snaptiq-full-screen-preview]');
+    this.fullScreenPane = this.mustQuery('[data-snaptiq-full-screen-pane]');
+    this.fullScreenTitle = this.mustQuery('[data-snaptiq-full-screen-title]');
+    this.originalFullScreenButton = this.mustQuery<HTMLButtonElement>('[data-snaptiq-full-screen-open="original"]');
+    this.processedFullScreenButton = this.mustQuery<HTMLButtonElement>('[data-snaptiq-full-screen-open="processed"]');
     this.backgroundSwatches = Array.from(this.root.querySelectorAll<HTMLButtonElement>('[data-snaptiq-background-swatch]'));
     this.backgroundInput = this.mustQuery<HTMLInputElement>('[data-snaptiq-background-input]');
 
     this.bindEvents();
     this.updateThresholdLabel();
     this.updateStats(emptyStatistics(Number(this.thresholdInput.value)));
+    this.updateFullScreenAvailability();
     this.applyPreviewBackground();
     this.setStatus('Upload a PNG file to begin.');
   }
@@ -104,6 +131,8 @@ export class SnaptiqWidget {
     }
 
     this.loadedImage?.originalBitmap.close();
+    document.removeEventListener('keydown', this.handleDocumentKeyDown);
+    window.removeEventListener('resize', this.handleWindowResize);
     this.root.innerHTML = '';
   }
 
@@ -145,6 +174,11 @@ export class SnaptiqWidget {
     this.mustQuery<HTMLButtonElement>('[data-snaptiq-zoom-in]').addEventListener('click', () => this.setZoom(this.viewState.zoom + zoomStep));
     this.mustQuery<HTMLButtonElement>('[data-snaptiq-zoom-out]').addEventListener('click', () => this.setZoom(this.viewState.zoom - zoomStep));
     this.mustQuery<HTMLButtonElement>('[data-snaptiq-reset-zoom]').addEventListener('click', () => this.resetView());
+    this.originalFullScreenButton.addEventListener('click', () => this.openFullScreenPreview('original'));
+    this.processedFullScreenButton.addEventListener('click', () => this.openFullScreenPreview('processed'));
+    this.mustQuery<HTMLButtonElement>('[data-snaptiq-full-screen-close]').addEventListener('click', () => this.closeFullScreenPreview());
+    document.addEventListener('keydown', this.handleDocumentKeyDown);
+    window.addEventListener('resize', this.handleWindowResize);
     this.backgroundInput.addEventListener('input', () => this.updatePreviewBackgroundFromInput());
 
     for (const swatch of this.backgroundSwatches) {
@@ -178,6 +212,7 @@ export class SnaptiqWidget {
       this.resetView();
       this.drawOriginal();
       this.processNow();
+      this.updateFullScreenAvailability();
       this.setStatus(`Loaded ${file.name}. Tune the threshold to compare the result.`);
     } catch (error) {
       this.setError(toDisplayMessage(error));
@@ -226,8 +261,10 @@ export class SnaptiqWidget {
       const threshold = Number(this.thresholdInput.value);
       this.processedResult = normalizeAlpha(this.loadedImage.original, threshold);
       this.drawProcessed();
+      this.drawFullScreenPreview();
       this.updateStats(this.processedResult.statistics);
       this.updateDownloadLink();
+      this.updateFullScreenAvailability();
     } catch (error) {
       this.setError(toDisplayMessage(error));
     }
@@ -239,6 +276,7 @@ export class SnaptiqWidget {
     }
 
     this.drawImageData(this.originalCanvas, this.originalContext, this.loadedImage.original);
+    this.drawFullScreenPreview();
   }
 
   private drawProcessed(): void {
@@ -247,6 +285,7 @@ export class SnaptiqWidget {
     }
 
     this.drawImageData(this.processedCanvas, this.processedContext, this.processedResult.imageData);
+    this.drawFullScreenPreview();
   }
 
   private drawImageData(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D, imageData: ImageData): void {
@@ -256,10 +295,83 @@ export class SnaptiqWidget {
     this.applyView();
   }
 
+  private openFullScreenPreview(imageType: FullScreenPreviewImageType): void {
+    if (!this.getImageDataForFullScreenPreview(imageType)) {
+      return;
+    }
+
+    this.isFullScreenPreview = true;
+    this.fullScreenPreviewImageType = imageType;
+    this.fullScreenTitle.textContent = imageType === 'original' ? 'Original' : 'Snaptiq';
+    this.fullScreenPreview.hidden = false;
+    this.root.classList.add('is-full-screen-preview');
+    this.drawFullScreenPreview();
+    this.applyPreviewBackground();
+    this.applyView();
+    requestAnimationFrame(() => this.updateFullScreenCanvasDisplaySize());
+    this.mustQuery<HTMLButtonElement>('[data-snaptiq-full-screen-close]').focus();
+  }
+
+  private closeFullScreenPreview(): void {
+    if (!this.isFullScreenPreview) {
+      return;
+    }
+
+    this.isFullScreenPreview = false;
+    this.fullScreenPreview.hidden = true;
+    this.root.classList.remove('is-full-screen-preview');
+    this.applyView();
+  }
+
+  private drawFullScreenPreview(): void {
+    if (!this.isFullScreenPreview) {
+      return;
+    }
+
+    const imageData = this.getImageDataForFullScreenPreview(this.fullScreenPreviewImageType);
+    if (!imageData) {
+      this.closeFullScreenPreview();
+      return;
+    }
+
+    this.drawImageData(this.fullScreenCanvas, this.fullScreenContext, imageData);
+    this.updateFullScreenCanvasDisplaySize();
+  }
+
+  private updateFullScreenCanvasDisplaySize(): void {
+    if (!this.isFullScreenPreview || this.fullScreenCanvas.width === 0 || this.fullScreenCanvas.height === 0) {
+      return;
+    }
+
+    const paneWidth = this.fullScreenPane.clientWidth;
+    const paneHeight = this.fullScreenPane.clientHeight;
+    if (paneWidth <= 0 || paneHeight <= 0) {
+      return;
+    }
+
+    const fitScale = Math.min(paneWidth / this.fullScreenCanvas.width, paneHeight / this.fullScreenCanvas.height);
+    this.fullScreenCanvas.style.width = `${this.fullScreenCanvas.width * fitScale}px`;
+    this.fullScreenCanvas.style.height = `${this.fullScreenCanvas.height * fitScale}px`;
+  }
+
+  private getImageDataForFullScreenPreview(imageType: FullScreenPreviewImageType): ImageData | null {
+    if (imageType === 'original') {
+      return this.loadedImage?.original ?? null;
+    }
+
+    return this.processedResult?.imageData ?? null;
+  }
+
+  private updateFullScreenAvailability(): void {
+    this.originalFullScreenButton.disabled = !this.loadedImage;
+    this.processedFullScreenButton.disabled = !this.processedResult;
+  }
+
   private updateDownloadLink(): void {
     if (!this.processedResult || !this.loadedImage) {
       this.downloadLink.removeAttribute('href');
       this.downloadLink.setAttribute('aria-disabled', 'true');
+      this.updateFullScreenAvailability();
       return;
     }
 
@@ -326,6 +438,7 @@ export class SnaptiqWidget {
     const transform = `translate(${this.viewState.panX}px, ${this.viewState.panY}px) scale(${this.viewState.zoom})`;
     this.originalCanvas.style.transform = transform;
     this.processedCanvas.style.transform = transform;
+    this.fullScreenCanvas.style.transform = transform;
 
     for (const pane of this.panes) {
       pane.classList.toggle('is-pannable', this.viewState.zoom > 1);
@@ -389,6 +502,7 @@ export class SnaptiqWidget {
     this.statusMessage.classList.add('is-error');
     this.downloadLink.removeAttribute('href');
     this.downloadLink.setAttribute('aria-disabled', 'true');
+    this.updateFullScreenAvailability();
   }
 
   private mustQuery<T extends Element = HTMLElement>(selector: string): T {
@@ -444,13 +558,19 @@ function renderWidget(initialThreshold: number): string {
 
       <div class="snaptiq-workspace">
         <figure>
-          <figcaption>Original</figcaption>
+          <figcaption>
+            <span>Original</span>
+            <button class="snaptiq-preview-action" data-snaptiq-full-screen-open="original" type="button">Full screen</button>
+          </figcaption>
           <div class="snaptiq-pane" data-snaptiq-pane>
             <canvas data-snaptiq-original-canvas></canvas>
           </div>
         </figure>
         <figure>
-          <figcaption>Snaptiq</figcaption>
+          <figcaption>
+            <span>Snaptiq</span>
+            <button class="snaptiq-preview-action" data-snaptiq-full-screen-open="processed" type="button">Full screen</button>
+          </figcaption>
           <div class="snaptiq-pane" data-snaptiq-pane>
             <canvas data-snaptiq-processed-canvas></canvas>
           </div>
@@ -479,6 +599,16 @@ function renderWidget(initialThreshold: number): string {
         <div><dt>Semi-transparent pixels found</dt><dd data-snaptiq-semi-transparent>0</dd></div>
         <div><dt>Pixels modified</dt><dd data-snaptiq-modified>0</dd></div>
       </dl>
+
+      <div class="snaptiq-full-screen-preview" data-snaptiq-full-screen-preview hidden>
+        <div class="snaptiq-full-screen-bar">
+          <strong data-snaptiq-full-screen-title>Original</strong>
+          <button class="snaptiq-full-screen-close" data-snaptiq-full-screen-close type="button">Exit full screen</button>
+        </div>
+        <div class="snaptiq-pane snaptiq-full-screen-pane" data-snaptiq-pane data-snaptiq-full-screen-pane>
+          <canvas data-snaptiq-full-screen-canvas></canvas>
+        </div>
+      </div>
     </section>
   `;
 }
