@@ -339,7 +339,7 @@ export function mountSnaptiqWidget(root: HTMLElement | string, options?: Snaptiq
 
 function renderWidget(initialThreshold: number): string {
   return `
-    <section class="snaptiq-widget" aria-label="Snaptiq PNG alpha fixer">
+    <section class="snaptiq-web" aria-label="Snaptiq PNG alpha fixer">
       <div class="snaptiq-upload" data-snaptiq-drop-zone>
         <div>
           <strong>Upload a PNG</strong>

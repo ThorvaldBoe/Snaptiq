@@ -45,3 +45,33 @@ npm install
 npm run web:test
 npm run web:build
 ```
+
+## Snaptiq Web
+
+The local web app remains a Vite client app:
+
+```bash
+npm run web:dev
+npm run web:build
+```
+
+The embeddable widget build exposes `window.SnaptiqWeb` and writes stable assets to `web/dist-embed/`:
+
+```bash
+npm run build:embed
+```
+
+Copy `web/dist-embed/snaptiq-web.js` and `web/dist-embed/snaptiq-web.css` into the host site, such as
+`ArtsyVistaWeb/public/vendor/snaptiq-web/`, then load both files on the host page.
+
+```html
+<link rel="stylesheet" href="/vendor/snaptiq-web/snaptiq-web.css" />
+<div id="snaptiq-tool"></div>
+<script src="/vendor/snaptiq-web/snaptiq-web.js"></script>
+<script>
+  window.SnaptiqWeb.mount('#snaptiq-tool', { initialThreshold: 128 });
+</script>
+```
+
+`mount(target, options?)` accepts a CSS selector string or an `HTMLElement`. Use
+`window.SnaptiqWeb.unmount(target)` to destroy a mounted widget.
