@@ -22,7 +22,13 @@ export interface SnaptiqWidgetOptions {
 interface LoadedImage {
   fileName: string;
   original: ImageData;
-  originalBitmap: ImageBitmap;
+}
+
+interface DecodedPng {
+  source: CanvasImageSource;
+  width: number;
+  height: number;
+  dispose: () => void;
 }
 
 interface ViewState {
@@ -39,6 +45,34 @@ const maximumZoom = 8;
 const zoomStep = 0.25;
 export const defaultSampleImageUrl = '/samples/sampleimage.png';
 const sampleImageFileName = 'sampleimage.png';
+
+export class UnsupportedPngFileError extends Error {
+  public constructor() {
+    super('Unsupported file format. Please upload a PNG file.');
+    this.name = 'UnsupportedPngFileError';
+  }
+}
+
+export class PngDecodeError extends Error {
+  public constructor() {
+    super('Image is corrupted or could not be read.');
+    this.name = 'PngDecodeError';
+  }
+}
+
+export class SampleImageFetchError extends Error {
+  public constructor(message: string) {
+    super(message);
+    this.name = 'SampleImageFetchError';
+  }
+}
+
+export class SampleImageDecodeError extends Error {
+  public constructor(message: string) {
+    super(message);
+    this.name = 'SampleImageDecodeError';
+  }
+}
 
 export class SnaptiqWidget {
   private readonly root: HTMLElement;
@@ -133,7 +167,6 @@ export class SnaptiqWidget {
       URL.revokeObjectURL(this.downloadLink.href);
     }
 
-    this.loadedImage?.originalBitmap.close();
     document.removeEventListener('keydown', this.handleDocumentKeyDown);
     window.removeEventListener('resize', this.handleWindowResize);
     this.root.innerHTML = '';
@@ -199,24 +232,10 @@ export class SnaptiqWidget {
 
   private async loadFile(file: File): Promise<void> {
     try {
-      validatePngFile(file);
-      this.setStatus('Reading PNG file...');
-
-      const bitmap = await decodePngFile(file);
-      const original = readImageData(bitmap);
-
-      this.loadedImage?.originalBitmap.close();
-      this.loadedImage = {
-        fileName: file.name,
-        original,
-        originalBitmap: bitmap
-      };
-
-      this.resetView();
-      this.drawOriginal();
-      this.processNow();
-      this.updateFullScreenAvailability();
-      this.setStatus(`Loaded ${file.name}. Tune the threshold to compare the result.`);
+      await this.loadPngFile(file, {
+        loadingMessage: 'Reading PNG file...',
+        successMessage: `Loaded ${file.name}. Tune the threshold to compare the result.`
+      });
     } catch (error) {
       this.setError(toDisplayMessage(error));
     } finally {
@@ -226,16 +245,51 @@ export class SnaptiqWidget {
 
   private async loadSampleImage(): Promise<void> {
     try {
-      const response = await fetch(this.sampleImageUrl);
-      if (!response.ok) {
-        throw new Error('Image is corrupted or could not be read.');
-      }
-
-      const blob = await response.blob();
-      const file = new File([blob], sampleImageFileName, { type: 'image/png' });
-      await this.loadFile(file);
+      this.setStatus('Fetching sample PNG...');
+      const file = await fetchSampleImageFile(this.sampleImageUrl);
+      await this.loadPngFile(file, {
+        loadingMessage: 'Reading sample PNG...',
+        successMessage: `Loaded ${sampleImageFileName}. Tune the threshold to compare the result.`,
+        errorTransformer: toSampleImageLoadError
+      });
     } catch (error) {
       this.setError(toDisplayMessage(error));
+    }
+  }
+
+  private async loadPngFile(
+    file: File,
+    options: {
+      loadingMessage: string;
+      successMessage: string;
+      errorTransformer?: (error: unknown) => Error;
+    }
+  ): Promise<void> {
+    this.setStatus(options.loadingMessage);
+
+    try {
+      validatePngFile(file);
+      const decodedPng = await decodePngFile(file);
+      let original: ImageData;
+
+      try {
+        original = readImageData(decodedPng.source, decodedPng.width, decodedPng.height);
+      } finally {
+        decodedPng.dispose();
+      }
+
+      this.loadedImage = {
+        fileName: file.name,
+        original
+      };
+
+      this.resetView();
+      this.drawOriginal();
+      this.processNow();
+      this.updateFullScreenAvailability();
+      this.setStatus(options.successMessage);
+    } catch (error) {
+      throw options.errorTransformer ? options.errorTransformer(error) : error;
     }
   }
 
@@ -648,25 +702,64 @@ function validatePngFile(file: File): void {
   const hasUnknownType = file.type === '';
 
   if (!hasPngType && !(hasUnknownType && fileName.endsWith('.png'))) {
-    throw new Error('Unsupported file format. Please upload a PNG file.');
+    throw new UnsupportedPngFileError();
   }
 }
 
-async function decodePngFile(file: File): Promise<ImageBitmap> {
+export async function decodePngFile(file: File): Promise<DecodedPng> {
   try {
-    return await createImageBitmap(file);
+    if (typeof createImageBitmap === 'function') {
+      const bitmap = await createImageBitmap(file);
+      return {
+        source: bitmap,
+        width: bitmap.width,
+        height: bitmap.height,
+        dispose: () => bitmap.close()
+      };
+    }
   } catch {
-    throw new Error('Image is corrupted or could not be read.');
+    return decodePngFileWithImageElement(file);
+  }
+
+  return decodePngFileWithImageElement(file);
+}
+
+async function decodePngFileWithImageElement(file: File): Promise<DecodedPng> {
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await loadImageElement(objectUrl);
+    return {
+      source: image,
+      width: image.naturalWidth || image.width,
+      height: image.naturalHeight || image.height,
+      dispose: () => {
+        image.src = '';
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  } catch {
+    URL.revokeObjectURL(objectUrl);
+    throw new PngDecodeError();
   }
 }
 
-function readImageData(bitmap: ImageBitmap): ImageData {
+function loadImageElement(objectUrl: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new PngDecodeError());
+    image.src = objectUrl;
+  });
+}
+
+function readImageData(source: CanvasImageSource, width: number, height: number): ImageData {
   const canvas = document.createElement('canvas');
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
+  canvas.width = width;
+  canvas.height = height;
   const context = getCanvasContext(canvas);
-  context.drawImage(bitmap, 0, 0);
-  return context.getImageData(0, 0, bitmap.width, bitmap.height);
+  context.drawImage(source, 0, 0);
+  return context.getImageData(0, 0, width, height);
 }
 
 function getCanvasContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
@@ -690,6 +783,41 @@ function emptyStatistics(threshold: number): ProcessingStatistics {
     pixelsModified: 0,
     thresholdUsed: threshold
   };
+}
+
+export async function fetchSampleImageFile(sampleImageUrl: string): Promise<File> {
+  let response: Response;
+
+  try {
+    response = await fetch(sampleImageUrl);
+  } catch {
+    throw new SampleImageFetchError('Sample image could not be fetched.');
+  }
+
+  if (!response.ok) {
+    throw new SampleImageFetchError(
+      `Sample image could not be fetched (${response.status} ${response.statusText || 'HTTP error'}).`
+    );
+  }
+
+  const blob = await response.blob();
+  return new File([blob], sampleImageFileName, { type: 'image/png' });
+}
+
+export function toSampleImageLoadError(error: unknown): Error {
+  if (error instanceof UnsupportedPngFileError) {
+    return new SampleImageDecodeError('Sample image is not a PNG file.');
+  }
+
+  if (error instanceof PngDecodeError) {
+    return new SampleImageDecodeError('Sample image could not be decoded.');
+  }
+
+  if (error instanceof Error) {
+    return error;
+  }
+
+  return new SampleImageDecodeError('Sample image could not be decoded.');
 }
 
 function toDisplayMessage(error: unknown): string {
