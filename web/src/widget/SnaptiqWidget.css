@@ -44,6 +44,12 @@
   display: block;
 }
 
+.snaptiq-web .snaptiq-upload-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .snaptiq-web .snaptiq-upload span,
 .snaptiq-web .snaptiq-status,
 .snaptiq-web .snaptiq-stats dt {
